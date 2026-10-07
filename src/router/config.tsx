@@ -1,11 +1,12 @@
 import type { RouteObject } from "react-router-dom";
 import StoreLayout from "@/components/feature/StoreLayout";
-import ComingSoon from "@/components/feature/ComingSoon";
 import AdminLayout from "@/components/feature/AdminLayout";
 import Home from "@/pages/home/page";
 import StorePage from "@/pages/store/page";
 import ProductDetailPage from "@/pages/store/detail/page";
 import CartPage from "@/pages/cart/page";
+import CheckoutPage from "@/pages/checkout/page";
+import OrderConfirmationPage from "@/pages/pedido/page";
 import CoursesPage from "@/pages/courses/page";
 import CourseDetailPage from "@/pages/courses/detail/page";
 import MatriculaPage from "@/pages/matricula/page";
@@ -15,6 +16,9 @@ import AgendaPage from "@/pages/agenda/page";
 import NosotrosPage from "@/pages/nosotros/page";
 import ContactoPage from "@/pages/contacto/page";
 import AccountPage from "@/pages/account/page";
+import MyOrdersPage from "@/pages/account/pedidos/page";
+import MyCoursesPage from "@/pages/account/cursos/page";
+import MyPatternsPage from "@/pages/account/patrones/page";
 import NotFound from "@/pages/NotFound";
 import AdminLoginPage from "@/pages/admin/login/page";
 import AdminGuard from "@/pages/admin/AdminGuard";
@@ -47,47 +51,12 @@ const routes: RouteObject[] = [
       { path: "nosotros", element: <NosotrosPage /> },
       { path: "contacto", element: <ContactoPage /> },
       { path: "carrito", element: <CartPage /> },
+      { path: "checkout", element: <CheckoutPage /> },
+      { path: "pedido/:id", element: <OrderConfirmationPage /> },
       { path: "mi-cuenta", element: <AccountPage /> },
-      {
-        path: "mi-cuenta/pedidos",
-        element: (
-          <ComingSoon
-            title="Mis pedidos"
-            description="Aquí verás el historial de tus compras y su estado."
-            icon="ri-shopping-bag-3-line"
-          />
-        ),
-      },
-      {
-        path: "mi-cuenta/cursos",
-        element: (
-          <ComingSoon
-            title="Mis cursos"
-            description="Tus matrículas y los horarios de tus cursos en un solo lugar."
-            icon="ri-graduation-cap-line"
-          />
-        ),
-      },
-      {
-        path: "mi-cuenta/patrones",
-        element: (
-          <ComingSoon
-            title="Mis patrones"
-            description="Los patrones que has descargado o comprado."
-            icon="ri-file-text-line"
-          />
-        ),
-      },
-      {
-        path: "checkout",
-        element: (
-          <ComingSoon
-            title="Finalizar compra"
-            description="Aquí completarás tus datos de envío y el pago con tarjeta o SINPE Móvil."
-            icon="ri-secure-payment-line"
-          />
-        ),
-      },
+      { path: "mi-cuenta/pedidos", element: <MyOrdersPage /> },
+      { path: "mi-cuenta/cursos", element: <MyCoursesPage /> },
+      { path: "mi-cuenta/patrones", element: <MyPatternsPage /> },
     ],
   },
   {

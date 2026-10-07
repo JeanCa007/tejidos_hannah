@@ -50,17 +50,17 @@ Plataforma web de comercio y aprendizaje alrededor del tejido y las manualidades
 - `/admin/configuracion` — Configuración general del sitio
 
 ## 3. Funcionalidades Principales
-- [ ] Catálogo de productos con categorías, imágenes, precio y stock
-- [ ] Carrito de compras y cálculo de envío por zona
-- [ ] Checkout para invitados y para clientes con cuenta
+- [x] Catálogo de productos con categorías, imágenes, precio y stock
+- [x] Carrito de compras y cálculo de envío por zona
+- [x] Checkout para invitados y para clientes con cuenta
 - [ ] Pago en línea con pasarela local de Costa Rica (Tilopay) — tarjeta y SINPE Móvil
 - [ ] Confirmación de pedido y correo de notificación
-- [ ] Cursos con horarios (sesiones), cupos, matrícula y pago
-- [ ] Agendamiento de citas para clases personalizadas
-- [ ] Patrones: gratuitos (descarga) y de pago
-- [ ] Cuenta de cliente: registro, login, historial de pedidos, mis cursos y mis patrones
-- [ ] Panel de administración con control total (inventario, pedidos, envíos, cursos, patrones, clientes)
-- [ ] Home editable: versículo bíblico y sección de destacados administrables
+- [x] Cursos con horarios (sesiones), cupos, matrícula y pago
+- [x] Agendamiento de citas para clases personalizadas
+- [x] Patrones: gratuitos (descarga) y de pago
+- [x] Cuenta de cliente: registro, login, historial de pedidos, mis cursos y mis patrones
+- [x] Panel de administración con control total (inventario, pedidos, envíos, cursos, patrones, clientes)
+- [x] Home editable: versículo bíblico y sección de destacados administrables
 - [x] Roles y permisos (administrador vs. cliente) — tabla `roles` + acceso único por rol
 
 ## 4. Diseño del Modelo de Datos (Supabase)
@@ -263,6 +263,7 @@ Plataforma web de comercio y aprendizaje alrededor del tejido y las manualidades
 ### Fase 4: Pedidos, checkout y envíos
 - Objetivo: checkout para invitados y clientes, cálculo de envío por zona y creación real de pedidos.
 - Entregable: un cliente puede finalizar una compra y ver la confirmación.
+- Estado: ✅ Checkout completo (datos de envío, zonas con costo/envío gratis, resumen y método de pago), creación real del pedido en la base de datos (`create_order`) y página de confirmación `/pedido/:id` (`get_order`). Pendiente: cobro en línea con Tilopay (Fase 8).
 
 ### Fase 5: Panel de administración — productos, pedidos, envíos
 - Objetivo: CRUD de productos/inventario, gestión de pedidos y configuración de envíos.
@@ -279,3 +280,26 @@ Plataforma web de comercio y aprendizaje alrededor del tejido y las manualidades
 ### Fase 8: Pagos, correos y contenido administrable
 - Objetivo: integrar la pasarela local de Costa Rica, correos de notificación y edición del versículo/ textos del home desde el panel.
 - Entregable: cobros en línea reales y contenido editable por la administradora.
+
+### Fase 9: Cuenta del cliente y entrega de patrones
+- Objetivo: activar la cuenta del cliente con datos reales y asegurar la entrega de patrones comprados.
+- Entregable:
+  - `Mis pedidos` (`/mi-cuenta/pedidos`): historial real de compras del cliente con detalle de productos y total. ✅
+  - `Mis cursos` (`/mi-cuenta/cursos`): matrículas reales con su horario elegido. ✅
+  - `Mis patrones` (`/mi-cuenta/patrones`): patrones comprados + gratuitos, con descarga del PDF. ✅
+  - Matrícula de curso crea un registro real en `enrollments` con su `session_id` y actualiza el cupo (`create_enrollment`). ✅
+  - Comprar un patrón de pago ya no rompe el checkout: se registra en `pattern_purchases` y queda disponible en `Mis patrones`. ✅
+  - Las citas agendadas desde `/agenda` se reflejan en el panel `/admin/citas`. ✅
+- Estado: ✅ completada.
+
+### Fase 9.1: Ajustes de la cuenta del cliente
+- Objetivo: pulir la experiencia de la cuenta y los datos de contacto.
+- Entregable:
+  - Editar nombre y teléfono desde "Mi cuenta" (autoedición de `profiles`). ✅
+  - Correo en el formulario de Agenda, guardado en la cita (`appointments.email`). ✅
+  - Contadores de pedidos, cursos y patrones en "Mi cuenta". ✅
+- Estado: ✅ completada.
+
+### Fase 10 (pendiente): Pagos en línea y correos
+- Pasarela local (Tilopay) para tarjeta y SINPE Móvil, enganchada al checkout existente.
+- Correos de notificación con Resend (requiere API key y dominio verificado).

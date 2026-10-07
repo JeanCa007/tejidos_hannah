@@ -8,9 +8,12 @@ import {
   type ReactNode,
 } from "react";
 
+export type CartItemKind = "product" | "pattern";
+
 export interface CartItem {
   key: string;
   productId: string;
+  kind: CartItemKind;
   name: string;
   price: number;
   image: string;
@@ -44,7 +47,11 @@ function readStoredItems(): CartItem[] {
     const raw = window.localStorage.getItem(STORAGE_KEY);
     if (!raw) return [];
     const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? (parsed as CartItem[]) : [];
+    if (!Array.isArray(parsed)) return [];
+    return (parsed as CartItem[]).map((entry) => ({
+      ...entry,
+      kind: entry.kind === "pattern" ? "pattern" : "product",
+    }));
   } catch {
     return [];
   }

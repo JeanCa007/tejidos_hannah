@@ -1,10 +1,9 @@
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import { fetchCourseById } from "@/lib/catalog";
+import { createEnrollment } from "@/lib/account";
 import type { Course } from "@/lib/storeTypes";
 import { formatCRC } from "@/lib/format";
-
-const FORM_SUBMIT_URL = "https://readdy.ai/api/form/db38rnj2asjjtt1sljj0";
 
 type FormStatus = "idle" | "loading" | "success" | "error";
 
@@ -89,66 +88,30 @@ export default function MatriculaPage() {
 
     // Read the payload from the real form element so browser autofill is included.
     const formData = new FormData(form);
-
-    const honeypot = String(formData.get("website_alt") ?? "").trim();
-    if (honeypot) {
-      // Silently treat as success for bots.
-      setStatus("success");
-      return;
-    }
-    formData.delete("website_alt");
-
-    const body = new URLSearchParams();
-    formData.forEach((value, key) => {
-      body.append(key, String(value));
-    });
+    const studentName = String(formData.get("student_name") ?? "").trim();
+    const email = String(formData.get("email") ?? "").trim();
+    const phone = String(formData.get("phone") ?? "").trim();
+    const notes = String(formData.get("notes") ?? "").trim();
 
     setStatus("loading");
     setError("");
 
     try {
-      const response = await fetch(FORM_SUBMIT_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: body.toString(),
+      await createEnrollment({
+        courseId: course.id,
+        sessionId: selectedSession || null,
+        studentName,
+        email,
+        phone,
+        notes,
       });
-
-      const responseText = await response.text();
-      let parsed: {
-        code?: string;
-        message?: string;
-        meta?: { message?: string; detail?: string };
-      } | null = null;
-      try {
-        parsed = JSON.parse(responseText);
-      } catch {
-        parsed = null;
-      }
-
-      const serverMsg =
-        parsed?.meta?.message ||
-        parsed?.message ||
-        parsed?.meta?.detail ||
-        responseText;
-      const codeOk = parsed?.code === "OK";
-      const isSpam =
-        typeof serverMsg === "string" &&
-        serverMsg.toLowerCase().includes("spam");
-
-      if (response.ok && codeOk && !isSpam) {
-        setStatus("success");
-        form.reset();
-      } else {
-        setStatus("error");
-        setError(
-          typeof serverMsg === "string" && serverMsg
-            ? serverMsg
-            : "No pudimos enviar tu matrícula. Intenta de nuevo."
-        );
-      }
+      setStatus("success");
+      form.reset();
     } catch {
       setStatus("error");
-      setError("Hubo un problema de conexión. Revisa tu internet e intenta de nuevo.");
+      setError(
+        "No pudimos registrar tu matrícula. Revisa tus datos e intenta de nuevo."
+      );
     }
   };
 
@@ -336,17 +299,6 @@ export default function MatriculaPage() {
                 className="mt-2 w-full resize-none rounded-xl border border-background-200 bg-background-50 px-4 py-3 text-sm text-foreground-900 placeholder:text-foreground-400 focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-200"
               />
             </div>
-
-            {/* Anti-spam field: hidden via stylesheet, never inline */}
-            <input
-              type="text"
-              name="website_alt"
-              tabIndex={-1}
-              autoComplete="off"
-              aria-hidden="true"
-              readOnly
-              className="form-guard-field"
-            />
 
             <input type="hidden" name="course" value={course.title} readOnly />
             <input type="hidden" name="course_id" value={course.id} readOnly />

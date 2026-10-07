@@ -1,6 +1,9 @@
+import { useCallback } from "react";
 import { Link } from "react-router-dom";
+import { supabase } from "@/lib/supabase";
 import BookingCalendar, {
   type BookingCalendarTexts,
+  type BookingResult,
   type BookingServiceOption,
 } from "@/pages/agenda/components/BookingCalendar";
 
@@ -50,6 +53,8 @@ const texts: BookingCalendarTexts = {
   namePlaceholder: "Tu nombre",
   phoneLabel: "Teléfono / WhatsApp",
   phonePlaceholder: "8888 8888",
+  emailLabel: "Correo electrónico",
+  emailPlaceholder: "tucorreo@ejemplo.com",
   serviceLabel: "Tipo de clase",
   notesLabel: "Notas (opcional)",
   notesPlaceholder: "¿Qué te gustaría aprender o trabajar en la clase?",
@@ -66,6 +71,22 @@ const texts: BookingCalendarTexts = {
 };
 
 export default function AgendaPage() {
+  const handleBooked = useCallback(async (info: BookingResult) => {
+    const { error } = await supabase.from("appointments").insert({
+      name: info.name,
+      email: info.email || null,
+      phone: info.phone,
+      service: info.service || null,
+      date: info.date || null,
+      time_slot: info.timeSlot || null,
+      notes: info.notes || null,
+      status: "pending",
+    });
+    if (error) {
+      // Best-effort mirror into the admin panel; the booking is already stored.
+    }
+  }, []);
+
   return (
     <div>
       <header className="pb-6 pt-4">
@@ -87,6 +108,7 @@ export default function AgendaPage() {
           appointmentsApi={APPOINTMENTS_API}
           texts={texts}
           serviceOptions={serviceOptions}
+          onBooked={handleBooked}
         />
 
         <aside className="space-y-4 lg:sticky lg:top-24 lg:self-start">

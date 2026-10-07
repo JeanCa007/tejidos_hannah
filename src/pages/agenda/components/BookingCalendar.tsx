@@ -17,6 +17,16 @@ export interface BookingServiceOption {
   label: string;
 }
 
+export interface BookingResult {
+  name: string;
+  phone: string;
+  email: string;
+  service: string;
+  date: string;
+  timeSlot: string;
+  notes: string;
+}
+
 export interface BookingCalendarTexts {
   dayLabels: string[];
   monthNames: string[];
@@ -37,6 +47,8 @@ export interface BookingCalendarTexts {
   namePlaceholder: string;
   phoneLabel: string;
   phonePlaceholder: string;
+  emailLabel: string;
+  emailPlaceholder: string;
   serviceLabel: string;
   notesLabel: string;
   notesPlaceholder: string;
@@ -57,6 +69,7 @@ export interface BookingCalendarProps {
   texts: BookingCalendarTexts;
   serviceOptions?: BookingServiceOption[];
   containerStyle?: CSSProperties;
+  onBooked?: (info: BookingResult) => void | Promise<void>;
 }
 
 interface CalendarCell {
@@ -96,6 +109,7 @@ export default function BookingCalendar({
   texts,
   serviceOptions = [],
   containerStyle,
+  onBooked,
 }: BookingCalendarProps) {
   const [slots, setSlots] = useState<BookingTimeSlot[]>([]);
   const [loading, setLoading] = useState(true);
@@ -110,6 +124,7 @@ export default function BookingCalendar({
   const [form, setForm] = useState({
     name: "",
     phone: "",
+    email: "",
     service: serviceOptions[0]?.value ?? "",
     notes: "",
   });
@@ -229,6 +244,22 @@ export default function BookingCalendar({
       });
       if (!response.ok) throw new Error("request_failed");
 
+      if (onBooked) {
+        try {
+          await onBooked({
+            name: form.name.trim(),
+            phone: form.phone.trim(),
+            email: form.email.trim(),
+            service: serviceLabel,
+            date: selectedSlot.start_time.split(" ")[0] ?? "",
+            timeSlot: `${formatTime(selectedSlot.start_time)} - ${formatTime(selectedSlot.end_time)}`,
+            notes: form.notes.trim(),
+          });
+        } catch {
+          // Mirroring the booking into the admin panel is best-effort.
+        }
+      }
+
       await loadSlots();
       setSuccess(true);
       setSelectedSlot(null);
@@ -237,6 +268,7 @@ export default function BookingCalendar({
       setForm({
         name: "",
         phone: "",
+        email: "",
         service: serviceOptions[0]?.value ?? "",
         notes: "",
       });
@@ -542,6 +574,22 @@ export default function BookingCalendar({
                 className="mt-2 w-full rounded-xl border border-background-200 bg-background-50 px-4 py-3 text-sm text-foreground-900 placeholder:text-foreground-400 focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-200"
               />
             </div>
+          </div>
+
+          <div>
+            <label htmlFor="booking_email" className="text-sm font-semibold text-foreground-800">
+              {texts.emailLabel}
+            </label>
+            <input
+              id="booking_email"
+              name="customer_email"
+              type="email"
+              required
+              value={form.email}
+              onChange={(event) => setForm((prev) => ({ ...prev, email: event.target.value }))}
+              placeholder={texts.emailPlaceholder}
+              className="mt-2 w-full rounded-xl border border-background-200 bg-background-50 px-4 py-3 text-sm text-foreground-900 placeholder:text-foreground-400 focus:border-primary-400 focus:outline-none focus:ring-2 focus:ring-primary-200"
+            />
           </div>
 
           {serviceOptions.length > 0 && (

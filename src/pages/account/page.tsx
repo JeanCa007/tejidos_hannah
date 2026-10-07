@@ -1,15 +1,37 @@
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import AuthForm from "@/components/feature/AuthForm";
 import { useAuth } from "@/hooks/useAuth";
+import { fetchAccountCounts, type AccountCounts } from "@/lib/account";
+import ProfileEditor from "@/pages/account/components/ProfileEditor";
 
 const accountLinks = [
-  { to: "/mi-cuenta/pedidos", label: "Mis pedidos", icon: "ri-shopping-bag-3-line" },
-  { to: "/mi-cuenta/cursos", label: "Mis cursos", icon: "ri-graduation-cap-line" },
-  { to: "/mi-cuenta/patrones", label: "Mis patrones", icon: "ri-file-text-line" },
+  { to: "/mi-cuenta/pedidos", key: "orders" as const, label: "Mis pedidos", icon: "ri-shopping-bag-3-line" },
+  { to: "/mi-cuenta/cursos", key: "courses" as const, label: "Mis cursos", icon: "ri-graduation-cap-line" },
+  { to: "/mi-cuenta/patrones", key: "patterns" as const, label: "Mis patrones", icon: "ri-file-text-line" },
 ];
 
 export default function AccountPage() {
   const { user, profile, loading, signOut } = useAuth();
+  const [counts, setCounts] = useState<AccountCounts | null>(null);
+
+  useEffect(() => {
+    if (!user) {
+      setCounts(null);
+      return;
+    }
+    let active = true;
+    fetchAccountCounts()
+      .then((result) => {
+        if (active) setCounts(result);
+      })
+      .catch(() => {
+        if (active) setCounts(null);
+      });
+    return () => {
+      active = false;
+    };
+  }, [user]);
 
   if (loading) {
     return (
@@ -90,20 +112,29 @@ export default function AccountPage() {
             <span className="flex h-11 w-11 items-center justify-center rounded-full bg-accent-100 text-accent-700">
               <i className={`${link.icon} text-xl`} />
             </span>
-            <span className="text-sm font-semibold text-foreground-800">
+            <span className="flex-1 text-sm font-semibold text-foreground-800">
               {link.label}
             </span>
+            {counts && (
+              <span className="flex h-7 min-w-[1.75rem] items-center justify-center rounded-full bg-primary-500 px-2 text-xs font-bold text-background-50">
+                {counts[link.key]}
+              </span>
+            )}
           </Link>
         ))}
       </div>
 
+      <div className="mt-6">
+        <ProfileEditor />
+      </div>
+
       <div className="mt-6 rounded-[2rem] border border-background-200/70 bg-background-50 p-6">
         <h2 className="font-heading text-lg font-semibold text-foreground-950">
-          Tus accesos
+          Todo en un solo lugar
         </h2>
         <p className="mt-1 text-sm text-foreground-600">
-          Aquí aparecerán tus compras, matrículas y patrones una vez que
-          completemos el checkout y los pagos.
+          Revisa el estado de tus pedidos, los horarios de tus cursos y
+descarga los patrones que compraste o que son gratis.
         </p>
       </div>
     </div>

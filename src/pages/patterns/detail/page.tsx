@@ -78,6 +78,7 @@ export default function PatternDetailPage() {
   const handleBuy = () => {
     addItem({
       productId: pattern.id,
+      kind: "pattern",
       name: `Patrón: ${pattern.title}`,
       price: pattern.price,
       image: pattern.image,
