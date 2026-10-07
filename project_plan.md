@@ -30,6 +30,7 @@ Plataforma web de comercio y aprendizaje alrededor del tejido y las manualidades
 - `/matricula/:courseId` — Formulario de matrícula de curso
 - `/nosotros` — Sobre Tejidos Hannah
 - `/contacto` — Contacto
+- `/preguntas-frecuentes` — Preguntas frecuentes (envíos, pagos, devoluciones, cursos/patrones)
 - `/mi-cuenta` — Acceso del cliente (login/registro + resumen)
   - `/mi-cuenta/pedidos` — Historial de pedidos
   - `/mi-cuenta/cursos` — Mis cursos y matrículas
@@ -47,14 +48,15 @@ Plataforma web de comercio y aprendizaje alrededor del tejido y las manualidades
 - `/admin/clientes` — Clientes registrados
 - `/admin/envios` — Configuración de envíos (zonas, costos, envío gratis)
 - `/admin/contenido` — Versículo bíblico y textos del home
-- `/admin/configuracion` — Configuración general del sitio
+- `/admin/configuracion` — Configuración general del sitio (logo editable + datos de contacto)
 
 ## 3. Funcionalidades Principales
 - [x] Catálogo de productos con categorías, imágenes, precio y stock
 - [x] Carrito de compras y cálculo de envío por zona
 - [x] Checkout para invitados y para clientes con cuenta
+- [x] Página de Preguntas frecuentes (envíos, pagos, devoluciones y cursos)
 - [ ] Pago en línea con pasarela local de Costa Rica (Tilopay) — tarjeta y SINPE Móvil
-- [ ] Confirmación de pedido y correo de notificación
+- [x] Confirmación de pedido y correo de notificación
 - [x] Cursos con horarios (sesiones), cupos, matrícula y pago
 - [x] Agendamiento de citas para clases personalizadas
 - [x] Patrones: gratuitos (descarga) y de pago
@@ -241,7 +243,7 @@ Plataforma web de comercio y aprendizaje alrededor del tejido y las manualidades
 - **Base de datos:** SaaS Supabase (ya conectado). Auth, base de datos y almacenamiento.
 - **Pagos:** pasarela local de Costa Rica (Tilopay recomendada — tarjeta + SINPE Móvil) mediante Edge Functions. Las llaves de comercio se pedirán de forma segura en la fase de pagos. (Stripe no opera en Costa Rica.)
 - **PayPal:** opcional más adelante como alternativa de pago.
-- **Correos:** notificaciones de pedido/matrícula (Resend) — fase posterior.
+- **Correos:** notificaciones de pedido/matrícula mediante una Edge Function (`send-email`) que hace un puente HTTPS a un **Google Apps Script** (Web App) que envía con el Gmail de la marca (`GmailApp.sendEmail`). Gratis, sin proveedor de pago ni SMTP. Requiere guardar en Supabase los secretos `APPS_SCRIPT_URL`, `APPS_SCRIPT_SECRET` y `EMAIL_FROM_NAME`. (Supabase/Deno bloquea los puertos SMTP y no ofrece servicio propio de correos transaccionales; su correo nativo es solo para login/registro.)
 - **Shopify:** no aplica (se usa catálogo propio en Supabase).
 - **Citas:** módulo propio de agenda en Supabase; se puede complementar con la Agenda integrada si se desea.
 
@@ -300,6 +302,25 @@ Plataforma web de comercio y aprendizaje alrededor del tejido y las manualidades
   - Contadores de pedidos, cursos y patrones en "Mi cuenta". ✅
 - Estado: ✅ completada.
 
-### Fase 10 (pendiente): Pagos en línea y correos
+### Fase 9.2: Correos de notificación (Google Apps Script + Gmail)
+- Objetivo: enviar correos automáticos de confirmación de pedido y de matrícula.
+- Entregable:
+  - Edge Function `send-email` que arma y envía el correo a través de un puente HTTPS hacia un Google Apps Script Web App (que envía con Gmail), verifica que el solicitante no dispare correos de otros usuarios y adjunta el detalle del pedido/matrícula. ✅
+  - Se dispara automáticamente tras crear un pedido (checkout) y una matrícula. ✅
+  - Copia del correo al negocio (bandeja del propietario) por cada pedido y matrícula nueva. La dirección se toma de `EMAIL_BUSINESS_TO` (secreto opcional) o, si no existe, del correo de contacto guardado en `site_settings` (clave `general`). ✅
+  - Aviso al cliente en la página de confirmación (`/pedido`) de que el correo de confirmación fue enviado a su dirección. ✅
+- Pendiente de configuración por la usuaria: crear el Apps Script con `GmailApp`, publicarlo como Web App y guardar `APPS_SCRIPT_URL`, `APPS_SCRIPT_SECRET` y `EMAIL_FROM_NAME` en los secretos del proyecto en Supabase.
+- Estado: ✅ código listo (esperando los secretos de Google).
+
+### Fase 9.3: Logo editable desde el panel
+- Objetivo: que la marca (logo) se pueda personalizar sin tocar código.
+- Entregable:
+  - Nueva sección "Logo" en `/admin/configuracion` con texto del logo, selector de ícono y subida de imagen (opcional) con vista previa. ✅
+  - El logo se guarda en `site_settings` (clave `general`: `logoText`, `logoIcon`, `logoImageUrl`). ✅
+  - Un proveedor compartido (`useSiteSettings` + componente `BrandLogo`) muestra el mismo logo en el encabezado, el pie y el panel, actualizándose al guardar. ✅
+  - Si hay imagen, reemplaza al ícono + texto; si no, se usa el ícono elegido con el texto. ✅
+- Estado: ✅ completada.
+
+### Fase 10 (pendiente): Pagos en línea
 - Pasarela local (Tilopay) para tarjeta y SINPE Móvil, enganchada al checkout existente.
-- Correos de notificación con Resend (requiere API key y dominio verificado).
+- Correos de notificación ya implementados con Google Apps Script + Gmail (ver Fase 9.2).

@@ -4,6 +4,7 @@ import { I18nextProvider } from "react-i18next";
 import i18n from "./i18n";
 import { CartProvider } from "./hooks/useCart";
 import { AuthProvider } from "./hooks/useAuth";
+import { SiteSettingsProvider } from "./hooks/useSiteSettings";
 
 
 function App() {
@@ -12,7 +13,9 @@ function App() {
       <BrowserRouter basename={__BASE_PATH__}>
         <AuthProvider>
           <CartProvider>
-            <AppRoutes />
+            <SiteSettingsProvider>
+              <AppRoutes />
+            </SiteSettingsProvider>
           </CartProvider>
         </AuthProvider>
       </BrowserRouter>

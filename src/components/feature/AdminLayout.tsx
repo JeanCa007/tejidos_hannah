@@ -1,6 +1,7 @@
 import { Link, NavLink, Outlet } from "react-router-dom";
 import { adminNav } from "@/pages/admin/adminNav";
 import { useAuth } from "@/hooks/useAuth";
+import BrandLogo from "./BrandLogo";
 
 export default function AdminLayout() {
   const { profile, signOut } = useAuth();
@@ -10,20 +11,12 @@ export default function AdminLayout() {
       <div className="mx-auto flex w-full max-w-[1400px]">
         <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col border-r border-background-200/70 bg-background-50 px-4 py-6 lg:flex">
           <Link to="/admin" className="flex items-center gap-2 px-2">
-            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-foreground-900 text-background-50">
-              <i className="ri-goblet-line text-lg" />
-            </span>
-            <span className="leading-tight">
-              <span
-                className="block text-lg text-foreground-950"
-                style={{ fontFamily: '"Pacifico", serif' }}
-              >
-                Tejidos Hannah
-              </span>
-              <span className="text-[10px] font-bold uppercase tracking-wide text-foreground-400">
-                Administración
-              </span>
-            </span>
+            <BrandLogo
+              iconBoxClassName="flex h-9 w-9 items-center justify-center rounded-full bg-foreground-900 text-background-50"
+              textClassName="text-lg text-foreground-950"
+              imageClassName="h-9 w-auto max-w-[150px] object-contain"
+              subtitle="Administración"
+            />
           </Link>
 
           <nav className="mt-6 flex-1 space-y-1 overflow-y-auto">
@@ -69,15 +62,11 @@ export default function AdminLayout() {
           <header className="sticky top-0 z-30 border-b border-background-200/70 bg-background-50/90 backdrop-blur-md">
             <div className="flex items-center justify-between gap-3 px-4 py-3 lg:px-8">
               <div className="flex items-center gap-2 lg:hidden">
-                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-foreground-900 text-background-50">
-                  <i className="ri-goblet-line" />
-                </span>
-                <span
-                  className="text-base text-foreground-950"
-                  style={{ fontFamily: '"Pacifico", serif' }}
-                >
-                  Tejidos Hannah
-                </span>
+                <BrandLogo
+                  iconBoxClassName="flex h-8 w-8 items-center justify-center rounded-full bg-foreground-900 text-background-50"
+                  textClassName="text-base text-foreground-950"
+                  imageClassName="h-8 w-auto max-w-[140px] object-contain"
+                />
               </div>
               <span className="hidden text-sm font-semibold text-foreground-500 lg:block">
                 Panel de administración

@@ -1,5 +1,6 @@
 import { Link, NavLink } from "react-router-dom";
 import { primaryNav } from "./navConfig";
+import BrandLogo from "./BrandLogo";
 import { useCart } from "@/hooks/useCart";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -9,16 +10,8 @@ export default function StoreHeader() {
   return (
     <header className="fixed top-0 left-0 z-40 w-full border-b border-background-200/70 bg-background-50/85 backdrop-blur-md">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
-        <Link to="/" className="flex items-center gap-2 shrink-0">
-          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-primary-500 text-background-50">
-            <i className="ri-goblet-line text-lg" />
-          </span>
-          <span
-            className="text-xl text-foreground-950"
-            style={{ fontFamily: '"Pacifico", serif' }}
-          >
-            Tejidos Hannah
-          </span>
+        <Link to="/" className="flex shrink-0 items-center">
+          <BrandLogo />
         </Link>
 
         <nav className="hidden items-center gap-1 lg:flex">

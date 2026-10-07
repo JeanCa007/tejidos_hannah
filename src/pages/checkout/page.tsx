@@ -4,6 +4,7 @@ import { useCart } from "@/hooks/useCart";
 import { useAuth } from "@/hooks/useAuth";
 import { formatCRC } from "@/lib/format";
 import { fetchShippingZones, createOrder, zoneCost } from "@/lib/orders";
+import { sendNotificationEmail } from "@/lib/email";
 import type { ShippingZone } from "@/lib/storeTypes";
 import ZonePicker from "./components/ZonePicker";
 import OrderSummary from "./components/OrderSummary";
@@ -128,6 +129,7 @@ export default function CheckoutPage() {
       });
 
       clearCart();
+      void sendNotificationEmail("order", created.id);
       navigate(`/pedido/${created.id}`, { replace: true });
     } catch {
       setFormError(

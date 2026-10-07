@@ -15,6 +15,7 @@ import PatternDetailPage from "@/pages/patterns/detail/page";
 import AgendaPage from "@/pages/agenda/page";
 import NosotrosPage from "@/pages/nosotros/page";
 import ContactoPage from "@/pages/contacto/page";
+import FaqPage from "@/pages/faq/page";
 import AccountPage from "@/pages/account/page";
 import MyOrdersPage from "@/pages/account/pedidos/page";
 import MyCoursesPage from "@/pages/account/cursos/page";
@@ -50,6 +51,7 @@ const routes: RouteObject[] = [
       { path: "agenda", element: <AgendaPage /> },
       { path: "nosotros", element: <NosotrosPage /> },
       { path: "contacto", element: <ContactoPage /> },
+      { path: "preguntas-frecuentes", element: <FaqPage /> },
       { path: "carrito", element: <CartPage /> },
       { path: "checkout", element: <CheckoutPage /> },
       { path: "pedido/:id", element: <OrderConfirmationPage /> },

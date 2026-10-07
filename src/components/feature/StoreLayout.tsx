@@ -1,6 +1,7 @@
 import { Outlet, Link } from "react-router-dom";
 import StoreHeader from "./StoreHeader";
 import BottomNav from "./BottomNav";
+import BrandLogo from "./BrandLogo";
 
 export default function StoreLayout() {
   return (
@@ -13,12 +14,11 @@ export default function StoreLayout() {
       <footer className="hidden border-t border-background-200/70 bg-background-100 lg:block">
         <div className="mx-auto grid max-w-7xl grid-cols-4 gap-8 px-8 py-12">
           <div className="col-span-2">
-            <span
-              className="text-2xl text-foreground-950"
-              style={{ fontFamily: '"Pacifico", serif' }}
-            >
-              Tejidos Hannah
-            </span>
+            <BrandLogo
+              iconBoxClassName="flex h-10 w-10 items-center justify-center rounded-full bg-primary-500 text-background-50"
+              textClassName="text-2xl text-foreground-950"
+              imageClassName="h-10 w-auto max-w-[200px] object-contain"
+            />
             <p className="mt-3 max-w-sm text-sm text-foreground-600">
               Piezas tejidas a mano con amor en Costa Rica, cursos de manualidades
               y patrones para que crees tus propias obras.
@@ -89,6 +89,11 @@ export default function StoreLayout() {
               <li>
                 <Link to="/contacto" className="hover:text-primary-600">
                   Contacto
+                </Link>
+              </li>
+              <li>
+                <Link to="/preguntas-frecuentes" className="hover:text-primary-600">
+                  Preguntas frecuentes
                 </Link>
               </li>
               <li>

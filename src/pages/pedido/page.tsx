@@ -118,6 +118,21 @@ export default function OrderConfirmationPage() {
         </div>
       </section>
 
+      <div className="mt-6 flex items-start gap-3 rounded-2xl border border-secondary-200 bg-secondary-50 p-4">
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-secondary-100 text-secondary-700">
+          <i className="ri-mail-check-line text-xl" />
+        </span>
+        <div>
+          <p className="text-sm font-semibold text-foreground-900">
+            Te enviamos la confirmación por correo
+          </p>
+          <p className="mt-0.5 text-sm text-foreground-600">
+            Mandamos el detalle de tu pedido a <strong className="text-foreground-900">{order.email}</strong>.
+            Si no lo ves, revisa la carpeta de spam o correo no deseado.
+          </p>
+        </div>
+      </div>
+
       <div className="mt-6 grid gap-4 sm:grid-cols-2">
         <div className="rounded-2xl border border-background-200/70 bg-background-50 p-5">
           <p className="text-xs font-bold uppercase tracking-wide text-foreground-500">

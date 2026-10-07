@@ -241,7 +241,7 @@ export interface CreateEnrollmentInput {
 /**
  * Creates a real enrollment record for the current user.
  */
-export async function createEnrollment(input: CreateEnrollmentInput): Promise<void> {
+export async function createEnrollment(input: CreateEnrollmentInput): Promise<string> {
   const payload = {
     course_id: input.courseId,
     session_id: input.sessionId ?? "",
@@ -250,6 +250,8 @@ export async function createEnrollment(input: CreateEnrollmentInput): Promise<vo
     phone: input.phone,
     notes: input.notes,
   };
-  const { error } = await supabase.rpc("create_enrollment", { payload });
+  const { data, error } = await supabase.rpc("create_enrollment", { payload });
   if (error) throw error;
+  const result = (data ?? {}) as Record<string, unknown>;
+  return String(result.id ?? "");
 }

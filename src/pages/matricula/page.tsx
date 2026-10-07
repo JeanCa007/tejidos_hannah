@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import { fetchCourseById } from "@/lib/catalog";
 import { createEnrollment } from "@/lib/account";
+import { sendNotificationEmail } from "@/lib/email";
 import type { Course } from "@/lib/storeTypes";
 import { formatCRC } from "@/lib/format";
 
@@ -97,7 +98,7 @@ export default function MatriculaPage() {
     setError("");
 
     try {
-      await createEnrollment({
+      const enrollmentId = await createEnrollment({
         courseId: course.id,
         sessionId: selectedSession || null,
         studentName,
@@ -105,6 +106,7 @@ export default function MatriculaPage() {
         phone,
         notes,
       });
+      void sendNotificationEmail("enrollment", enrollmentId);
       setStatus("success");
       form.reset();
     } catch {

@@ -113,6 +113,26 @@ export default function ContactoPage() {
         </p>
       </header>
 
+      <Link
+        to="/preguntas-frecuentes"
+        className="mb-8 flex items-center justify-between gap-4 rounded-2xl border border-background-200/70 bg-background-100 p-4 transition-colors hover:bg-background-200"
+      >
+        <span className="flex items-center gap-3">
+          <span className="flex h-11 w-11 items-center justify-center rounded-full bg-primary-100 text-primary-600">
+            <i className="ri-question-answer-line text-lg" />
+          </span>
+          <span>
+            <span className="block text-sm font-semibold text-foreground-900">
+              ¿Tienes una duda rápida?
+            </span>
+            <span className="block text-sm text-foreground-600">
+              Revisa nuestras preguntas frecuentes sobre envíos, pagos y devoluciones.
+            </span>
+          </span>
+        </span>
+        <i className="ri-arrow-right-s-line text-xl text-foreground-500" />
+      </Link>
+
       <div className="grid gap-8 lg:grid-cols-[1fr_20rem]">
         <form
           id="contacto-form"
