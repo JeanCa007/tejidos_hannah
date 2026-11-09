@@ -1,10 +1,30 @@
+import { useEffect, useState } from "react";
 import { Link, NavLink, Outlet } from "react-router-dom";
 import { adminNav } from "@/pages/admin/adminNav";
 import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/lib/supabase";
 import BrandLogo from "./BrandLogo";
 
 export default function AdminLayout() {
   const { profile, signOut } = useAuth();
+  const [pendingCustom, setPendingCustom] = useState(0);
+
+  useEffect(() => {
+    let active = true;
+    supabase
+      .from("custom_orders")
+      .select("id", { count: "exact", head: true })
+      .eq("status", "pending")
+      .then(({ count }) => {
+        if (active) setPendingCustom(count ?? 0);
+      })
+      .catch(() => {
+        if (active) setPendingCustom(0);
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
 
   return (
     <div className="min-h-screen bg-background-100">
@@ -35,6 +55,11 @@ export default function AdminLayout() {
               >
                 <i className={`${item.icon} text-lg`} />
                 {item.label}
+                {item.path === "/admin/personalizados" && pendingCustom > 0 && (
+                  <span className="ml-auto flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-primary-500 px-1.5 text-[10px] font-bold text-background-50">
+                    {pendingCustom}
+                  </span>
+                )}
               </NavLink>
             ))}
           </nav>
@@ -99,6 +124,11 @@ export default function AdminLayout() {
                 >
                   <i className={item.icon} />
                   {item.label}
+                  {item.path === "/admin/personalizados" && pendingCustom > 0 && (
+                    <span className="flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-primary-500 px-1 text-[9px] font-bold text-background-50">
+                      {pendingCustom}
+                    </span>
+                  )}
                 </NavLink>
               ))}
             </nav>

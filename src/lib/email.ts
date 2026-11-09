@@ -1,6 +1,19 @@
 import { supabase } from "@/lib/supabase";
 
-export type NotificationEmailType = "order" | "enrollment";
+export type NotificationEmailType =
+  | "order"
+  | "enrollment"
+  | "custom_order"
+  | "custom_order_quoted"
+  | "custom_order_accepted";
+
+/** Dirección pública del sitio, respetando la ruta base del proyecto. */
+export function currentSiteUrl(): string {
+  if (typeof window === "undefined") return "";
+  const basePath = __BASE_PATH__.split("/").filter(Boolean).join("/");
+  const pathPrefix = basePath ? `/${basePath}` : "";
+  return `${window.location.origin}${pathPrefix}`;
+}
 
 /**
  * Sends a transactional notification email from the backend (Google Apps Script bridge).
@@ -8,11 +21,16 @@ export type NotificationEmailType = "order" | "enrollment";
  */
 export async function sendNotificationEmail(
   type: NotificationEmailType,
-  id: string
+  id: string,
+  options?: { siteUrl?: string; token?: string }
 ): Promise<void> {
-  if (!id) return;
+  if (!id && !options?.token) return;
   try {
-    await supabase.functions.invoke("send-email", { body: { type, id } });
+    const body: Record<string, unknown> = { type };
+    if (id) body.id = id;
+    if (options?.siteUrl) body.siteUrl = options.siteUrl;
+    if (options?.token) body.token = options.token;
+    await supabase.functions.invoke("send-email", { body });
   } catch {
     // Emails are a nice-to-have; the record is already saved.
   }

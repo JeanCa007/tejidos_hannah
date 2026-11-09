@@ -305,6 +305,187 @@ async function buildEnrollmentEmail(enrollmentId: string, businessEmail: string)
   };
 }
 
+const CUSTOM_PIECE_LABELS: Record<string, string> = {
+  manta: "Manta o colcha",
+  amigurumi: "Amigurumi",
+  bolso: "Bolso o cartera",
+  bebe: "Ropa de bebé",
+  decoracion: "Decoración",
+  otro: "Otra idea",
+};
+
+async function buildCustomOrderEmail(orderId: string, businessEmail: string) {
+  const { data: order } = await adminClient
+    .from("custom_orders")
+    .select("*")
+    .eq("id", orderId)
+    .maybeSingle();
+  if (!order) return null;
+
+  const record = order as Record<string, unknown>;
+  const images = Array.isArray(record.reference_images)
+    ? (record.reference_images as unknown[]).filter(
+        (item): item is string => typeof item === "string",
+      )
+    : [];
+  const piece =
+    CUSTOM_PIECE_LABELS[String(record.piece_type ?? "")] ?? "Pieza personalizada";
+  const budget =
+    record.budget == null || String(record.budget) === "" ? "" : formatCRC(record.budget);
+  const neededBy = formatDate(record.needed_by);
+  const description = escapeHtml(record.description).replace(/\n/g, "<br />");
+  const customerName = String(record.customer_name ?? "");
+
+  const summary = `
+    <div style="margin-top:16px;padding:16px;background-color:#f9f4ef;border-radius:12px;font-size:14px;line-height:1.7;color:#3b2f28;">
+      <p style="margin:0 0 6px;"><strong>Tipo de pieza:</strong> ${escapeHtml(piece)}</p>
+      <p style="margin:0 0 6px;"><strong>Cantidad:</strong> ${escapeHtml(record.quantity ?? 1)}</p>
+      ${record.colors ? `<p style="margin:0 0 6px;"><strong>Colores:</strong> ${escapeHtml(record.colors)}</p>` : ""}
+      ${record.size ? `<p style="margin:0 0 6px;"><strong>Medidas:</strong> ${escapeHtml(record.size)}</p>` : ""}
+      ${neededBy ? `<p style="margin:0 0 6px;"><strong>Para cuándo:</strong> ${escapeHtml(neededBy)}</p>` : ""}
+      ${budget ? `<p style="margin:0;"><strong>Presupuesto:</strong> ${escapeHtml(budget)}</p>` : ""}
+    </div>
+    <div style="margin-top:16px;">
+      <p style="margin:0 0 6px;font-size:14px;color:#6b5a4e;"><strong>Su idea:</strong></p>
+      <p style="margin:0;font-size:14px;line-height:1.7;color:#3b2f28;">${description}</p>
+    </div>
+    ${images.length > 0 ? `<p style="margin:16px 0 0;font-size:13px;color:#8a7767;">Adjuntó ${images.length} imagen(es) de referencia.</p>` : ""}
+  `;
+
+  const businessContent = `
+    <div style="margin-top:16px;padding:16px;background-color:#f9f4ef;border-radius:12px;font-size:14px;line-height:1.7;color:#3b2f28;">
+      <p style="margin:0 0 6px;"><strong>Cliente:</strong> ${escapeHtml(customerName)}</p>
+      <p style="margin:0 0 6px;"><strong>Correo:</strong> ${escapeHtml(record.email)}</p>
+      <p style="margin:0;"><strong>Teléfono / WhatsApp:</strong> ${escapeHtml(record.phone)}</p>
+    </div>
+    ${images.length > 0 ? `<p style="margin:16px 0 0;font-size:14px;color:#3b2f28;"><strong>Referencias:</strong></p>${images.map((url) => `<p style="margin:4px 0;font-size:13px;"><a href="${escapeHtml(url)}" style="color:#9a5b3f;">${escapeHtml(url)}</a></p>`).join("")}` : ""}
+    <p style="margin:16px 0 0;font-size:14px;color:#6b5a4e;">Responde a <strong>${escapeHtml(record.email)}</strong> o escríbele al <strong>${escapeHtml(record.phone)}</strong> para cotizar.</p>
+  `;
+
+  return {
+    to: { email: String(record.email ?? ""), name: customerName },
+    subject: "Recibimos tu solicitud de pedido personalizado — Tejidos Hannah",
+    html: wrapHtml(
+      "¡Recibimos tu idea!",
+      `Gracias ${escapeHtml(customerName)}. Estamos revisando cada detalle y te escribimos con la cotización en 1 o 2 días hábiles.`,
+      summary,
+    ),
+    business: businessEmail
+      ? {
+          to: { email: businessEmail, name: EMAIL_FROM_NAME },
+          subject: `Nueva solicitud personalizada: ${piece} — ${customerName}`,
+          html: wrapHtml(
+            "Nueva solicitud de pedido personalizado",
+            "Entró una solicitud nueva al taller. Revisa los detalles y prepárala con calma:",
+            summary + businessContent,
+          ),
+        }
+      : null,
+    userId: record.user_id ? String(record.user_id) : null,
+  };
+}
+
+function resolveSiteUrl(raw: unknown): string {
+  const value = String(raw ?? "").trim().replace(/\/+$/, "");
+  if (/^https?:\/\//i.test(value)) return value;
+  const env = (Deno.env.get("SITE_URL") ?? "").trim().replace(/\/+$/, "");
+  if (/^https?:\/\//i.test(env)) return env;
+  return "";
+}
+
+/** Correo con la cotización y un botón para aceptarla en un clic. */
+async function buildCustomOrderQuotedEmail(orderId: string, siteUrl: string) {
+  const { data: order } = await adminClient
+    .from("custom_orders")
+    .select("*")
+    .eq("id", orderId)
+    .maybeSingle();
+  if (!order) return null;
+
+  const record = order as Record<string, unknown>;
+  if (record.quote_amount == null) return null;
+
+  const piece =
+    CUSTOM_PIECE_LABELS[String(record.piece_type ?? "")] ?? "Pieza personalizada";
+  const customerName = String(record.customer_name ?? "");
+  const token = record.accept_token ? String(record.accept_token) : "";
+  const link = siteUrl && token ? `${siteUrl}/cotizacion/${token}` : "";
+  const neededBy = formatDate(record.needed_by);
+
+  const content = `
+    <p style="margin:0 0 6px;font-size:13px;color:#8a7767;">Monto cotizado</p>
+    <p style="margin:0 0 20px;font-size:30px;font-weight:bold;color:#9a5b3f;">${formatCRC(record.quote_amount)}</p>
+    <div style="padding:16px;background-color:#f9f4ef;border-radius:12px;font-size:14px;line-height:1.7;color:#3b2f28;">
+      <p style="margin:0 0 6px;"><strong>Pieza:</strong> ${escapeHtml(piece)}</p>
+      <p style="margin:0 0 6px;"><strong>Cantidad:</strong> ${escapeHtml(record.quantity ?? 1)}</p>
+      ${record.colors ? `<p style="margin:0 0 6px;"><strong>Colores:</strong> ${escapeHtml(record.colors)}</p>` : ""}
+      ${record.size ? `<p style="margin:0 0 6px;"><strong>Medidas:</strong> ${escapeHtml(record.size)}</p>` : ""}
+      ${neededBy ? `<p style="margin:0;"><strong>Para cuándo:</strong> ${escapeHtml(neededBy)}</p>` : ""}
+    </div>
+    ${
+      link
+        ? `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:26px 0 0;"><tr><td style="border-radius:999px;background-color:#9a5b3f;"><a href="${link}" style="display:inline-block;padding:14px 32px;font-size:15px;font-weight:bold;color:#ffffff;text-decoration:none;border-radius:999px;">Aceptar cotización</a></td></tr></table>
+          <p style="margin:14px 0 0;font-size:12px;line-height:1.6;color:#8a7767;">Si el botón no abre, copia este enlace en tu navegador:<br /><a href="${link}" style="color:#9a5b3f;word-break:break-all;">${link}</a></p>`
+        : ""
+    }
+    <p style="margin:24px 0 0;font-size:14px;color:#6b5a4e;">Si quieres ajustar colores, medidas o tiempos, respóndenos a este correo y lo revisamos con gusto.</p>
+  `;
+
+  return {
+    to: { email: String(record.email ?? ""), name: customerName },
+    subject: `Tu cotización está lista: ${piece} — Tejidos Hannah`,
+    html: wrapHtml(
+      "¡Tu cotización está lista!",
+      `Hola ${escapeHtml(customerName)}, revisamos tu idea con calma y preparamos esta propuesta para ti.`,
+      content,
+    ),
+    business: null,
+    userId: record.user_id ? String(record.user_id) : null,
+  };
+}
+
+async function buildCustomOrderAcceptedEmail(orderId: string, businessEmail: string) {
+  const { data: order } = await adminClient
+    .from("custom_orders")
+    .select("*")
+    .eq("id", orderId)
+    .maybeSingle();
+  if (!order) return null;
+
+  const record = order as Record<string, unknown>;
+  const piece =
+    CUSTOM_PIECE_LABELS[String(record.piece_type ?? "")] ?? "Pieza personalizada";
+  const customerName = String(record.customer_name ?? "");
+  const neededBy = formatDate(record.needed_by);
+
+  const content = `
+    <div style="margin-top:16px;padding:16px;background-color:#f9f4ef;border-radius:12px;font-size:14px;line-height:1.7;color:#3b2f28;">
+      <p style="margin:0 0 6px;"><strong>Cliente:</strong> ${escapeHtml(customerName)}</p>
+      <p style="margin:0 0 6px;"><strong>Correo:</strong> ${escapeHtml(record.email)}</p>
+      <p style="margin:0 0 6px;"><strong>Teléfono / WhatsApp:</strong> ${escapeHtml(record.phone)}</p>
+      <p style="margin:0 0 6px;"><strong>Pieza:</strong> ${escapeHtml(piece)}</p>
+      <p style="margin:0 0 6px;"><strong>Cantidad:</strong> ${escapeHtml(record.quantity ?? 1)}</p>
+      ${record.colors ? `<p style="margin:0 0 6px;"><strong>Colores:</strong> ${escapeHtml(record.colors)}</p>` : ""}
+      ${record.size ? `<p style="margin:0 0 6px;"><strong>Medidas:</strong> ${escapeHtml(record.size)}</p>` : ""}
+      ${neededBy ? `<p style="margin:0 0 6px;"><strong>Para cuándo:</strong> ${escapeHtml(neededBy)}</p>` : ""}
+      <p style="margin:0;"><strong>Monto cotizado:</strong> ${formatCRC(record.quote_amount)}</p>
+    </div>
+    <p style="margin:16px 0 0;font-size:14px;color:#6b5a4e;">La clienta aceptó la cotización. Escríbele a <strong>${escapeHtml(record.email)}</strong> o al <strong>${escapeHtml(record.phone)}</strong> para coordinar el pago y el inicio de la pieza.</p>
+  `;
+
+  return {
+    to: { email: businessEmail, name: EMAIL_FROM_NAME },
+    subject: `Cotización aceptada: ${piece} — ${customerName}`,
+    html: wrapHtml(
+      "¡Tu clienta aceptó la cotización!",
+      "Ya puedes coordinar el pago y comenzar a tejer la pieza.",
+      content,
+    ),
+    business: null,
+    userId: record.user_id ? String(record.user_id) : null,
+  };
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -314,7 +495,13 @@ Deno.serve(async (req) => {
     return json({ error: "method_not_allowed" }, 405);
   }
 
-  let payload: { type?: string; id?: string; to?: string };
+  let payload: {
+    type?: string;
+    id?: string;
+    to?: string;
+    token?: string;
+    siteUrl?: string;
+  };
   try {
     payload = await req.json();
   } catch {
@@ -322,7 +509,21 @@ Deno.serve(async (req) => {
   }
 
   const type = payload?.type;
-  const id = payload?.id;
+  let id = payload?.id;
+  const linkToken = typeof payload?.token === "string" ? payload.token.trim() : "";
+
+  // Aceptación desde el enlace del correo: no hay sesión iniciada, así que el
+  // token único de la solicitud es lo que identifica al pedido.
+  if (type === "custom_order_accepted" && (!id || !UUID_RE.test(id))) {
+    if (UUID_RE.test(linkToken)) {
+      const { data: byToken } = await adminClient
+        .from("custom_orders")
+        .select("id")
+        .eq("accept_token", linkToken)
+        .maybeSingle();
+      id = byToken?.id ? String(byToken.id) : "";
+    }
+  }
 
   // Verify the caller JWT (optional: guests have no user, which is allowed).
   let callerId: string | null = null;
@@ -374,7 +575,28 @@ Deno.serve(async (req) => {
     }
   }
 
-  if ((type !== "order" && type !== "enrollment") || !id || !UUID_RE.test(id)) {
+  // Solo el taller puede enviar la cotización a una clienta.
+  if (type === "custom_order_quoted") {
+    if (!callerId) return json({ error: "unauthorized" }, 401);
+    const { data: profile } = await adminClient
+      .from("profiles")
+      .select("role")
+      .eq("id", callerId)
+      .maybeSingle();
+    if ((profile as { role?: string } | null)?.role !== "admin") {
+      return json({ error: "forbidden" }, 403);
+    }
+  }
+
+  if (
+    (type !== "order" &&
+      type !== "enrollment" &&
+      type !== "custom_order" &&
+      type !== "custom_order_quoted" &&
+      type !== "custom_order_accepted") ||
+    !id ||
+    !UUID_RE.test(id)
+  ) {
     return json({ error: "invalid_params" }, 400);
   }
 
@@ -386,13 +608,32 @@ Deno.serve(async (req) => {
     const businessEmail = await resolveBusinessEmail();
     const built = type === "order"
       ? await buildOrderEmail(id, businessEmail)
-      : await buildEnrollmentEmail(id, businessEmail);
+      : type === "enrollment"
+      ? await buildEnrollmentEmail(id, businessEmail)
+      : type === "custom_order_quoted"
+      ? await buildCustomOrderQuotedEmail(id, resolveSiteUrl(payload?.siteUrl))
+      : type === "custom_order_accepted"
+      ? await buildCustomOrderAcceptedEmail(id, businessEmail)
+      : await buildCustomOrderEmail(id, businessEmail);
 
     if (!built) return json({ error: "not_found" }, 404);
 
     // Ownership guard: never let a caller trigger an email for another user's record.
-    if (built.userId && built.userId !== callerId) {
-      return json({ error: "forbidden" }, 403);
+    // La cotización la dispara el taller y la aceptación puede llegar desde el
+    // enlace del correo, así que solo esas dos se validan distinto.
+    if (type !== "custom_order_quoted" && built.userId && built.userId !== callerId) {
+      let tokenOk = false;
+      if (type === "custom_order_accepted" && UUID_RE.test(linkToken)) {
+        const { data: row } = await adminClient
+          .from("custom_orders")
+          .select("accept_token")
+          .eq("id", id)
+          .maybeSingle();
+        tokenOk =
+          Boolean((row as { accept_token?: string } | null)?.accept_token) &&
+          String((row as { accept_token?: string } | null)?.accept_token) === linkToken;
+      }
+      if (!tokenOk) return json({ error: "forbidden" }, 403);
     }
     if (!built.to.email) {
       return json({ error: "no_recipient" }, 422);

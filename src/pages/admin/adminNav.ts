@@ -11,6 +11,7 @@ export const adminNav: AdminNavItem[] = [
   { label: "Cursos", path: "/admin/cursos", icon: "ri-graduation-cap-line" },
   { label: "Matrículas", path: "/admin/matriculas", icon: "ri-bookmark-3-line" },
   { label: "Citas", path: "/admin/citas", icon: "ri-calendar-check-line" },
+  { label: "Personalizados", path: "/admin/personalizados", icon: "ri-hand-heart-line" },
   { label: "Patrones", path: "/admin/patrones", icon: "ri-file-text-line" },
   { label: "Clientes", path: "/admin/clientes", icon: "ri-user-3-line" },
   { label: "Envíos", path: "/admin/envios", icon: "ri-truck-line" },

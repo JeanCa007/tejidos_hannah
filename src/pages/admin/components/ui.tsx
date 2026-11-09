@@ -330,6 +330,10 @@ const STATUS_MAP: Record<string, { label: string; cls: string }> = {
   paid: { label: "Pagado", cls: "bg-secondary-500 text-secondary-50" },
   unpaid: { label: "Sin pagar", cls: "bg-background-200 text-foreground-600" },
   refunded: { label: "Reembolsado", cls: "bg-accent-100 text-accent-800" },
+  quoted: { label: "Cotizada", cls: "bg-accent-100 text-accent-800" },
+  accepted: { label: "Aceptada", cls: "bg-secondary-100 text-secondary-800" },
+  in_progress: { label: "En proceso", cls: "bg-primary-100 text-primary-700" },
+  completed: { label: "Entregada", cls: "bg-secondary-500 text-secondary-50" },
 };
 
 export function StatusBadge({ status }: { status: string }) {

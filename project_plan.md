@@ -27,10 +27,12 @@ Plataforma web de comercio y aprendizaje alrededor del tejido y las manualidades
 - `/checkout` — Finalizar compra (invitado o con cuenta)
 - `/pedido/:id` — Confirmación / detalle de pedido
 - `/agenda` — Agendar una cita (clase personalizada / consulta)
+- `/pedido-personalizado` — Solicitar / cotizar un pedido personalizado (descripción, imágenes de referencia, colores, tamaño, cantidad, fecha y presupuesto)
 - `/matricula/:courseId` — Formulario de matrícula de curso
 - `/nosotros` — Sobre Tejidos Hannah
 - `/contacto` — Contacto
 - `/preguntas-frecuentes` — Preguntas frecuentes (envíos, pagos, devoluciones, cursos/patrones)
+- `/cotizacion/:token` — Cotización pública con botón "Aceptar cotización" (enlace del correo, funciona sin sesión)
 - `/mi-cuenta` — Acceso del cliente (login/registro + resumen)
   - `/mi-cuenta/pedidos` — Historial de pedidos
   - `/mi-cuenta/cursos` — Mis cursos y matrículas
@@ -44,6 +46,7 @@ Plataforma web de comercio y aprendizaje alrededor del tejido y las manualidades
 - `/admin/cursos` — Cursos y horarios
 - `/admin/matriculas` — Matrículas de cursos
 - `/admin/citas` — Citas agendadas
+- `/admin/personalizados` — Solicitudes de pedidos personalizados (cotizar, cambiar estado, notas)
 - `/admin/patrones` — Patrones (gratis / de pago)
 - `/admin/clientes` — Clientes registrados
 - `/admin/envios` — Configuración de envíos (zonas, costos, envío gratis)
@@ -63,6 +66,9 @@ Plataforma web de comercio y aprendizaje alrededor del tejido y las manualidades
 - [x] Cuenta de cliente: registro, login, historial de pedidos, mis cursos y mis patrones
 - [x] Panel de administración con control total (inventario, pedidos, envíos, cursos, patrones, clientes)
 - [x] Home editable: versículo bíblico y sección de destacados administrables
+- [x] Pedidos personalizados: solicitud pública con fotos de referencia y gestión de cotizaciones en el panel
+- [x] Seguimiento de pedidos personalizados en "Mi cuenta" + aviso automático por correo al taller y contador de pendientes en el panel
+- [x] Aceptación de cotización por la clienta desde su cuenta + entregas próximas en el resumen del panel
 - [x] Roles y permisos (administrador vs. cliente) — tabla `roles` + acceso único por rol
 
 ## 4. Diseño del Modelo de Datos (Supabase)
@@ -229,6 +235,30 @@ Plataforma web de comercio y aprendizaje alrededor del tejido y las manualidades
 | estimated_days | text | Tiempo estimado |
 | is_active | boolean | Activa |
 
+### custom_orders
+| Campo | Tipo | Descripción |
+|-------|------|-------------|
+| id | uuid (PK) | Identificador |
+| user_id | uuid (FK, nullable) | Cliente (si tenía sesión) |
+| customer_name | text | Nombre |
+| email | text | Correo |
+| phone | text | Teléfono / WhatsApp |
+| piece_type | text | Tipo de pieza (manta, amigurumi, bolso...) |
+| description | text | Descripción de la idea |
+| colors | text | Colores deseados |
+| size | text | Tamaño o medidas |
+| quantity | int | Cantidad |
+| budget | numeric | Presupuesto aproximado (opcional) |
+| needed_by | date | Fecha deseada (opcional) |
+| reference_images | jsonb | URLs de las imágenes de referencia |
+| status | text | 'pending', 'quoted', 'accepted', 'in_progress', 'completed', 'cancelled' |
+| quote_amount | numeric | Monto cotizado |
+| admin_notes | text | Notas internas del taller |
+| accept_token | uuid | Token único del enlace de cotización del correo (aceptar en un clic) |
+| created_at | timestamptz | Fecha de la solicitud |
+
+> **RLS:** cualquier visitante puede crear una solicitud (INSERT); cada clienta ve solo las suyas y el administrador ve y edita todas. Las fotos de referencia se suben al bucket público `media`, carpeta `solicitudes/`.
+
 ### site_settings
 | Campo | Tipo | Descripción |
 |-------|------|-------------|
@@ -319,6 +349,23 @@ Plataforma web de comercio y aprendizaje alrededor del tejido y las manualidades
   - El logo se guarda en `site_settings` (clave `general`: `logoText`, `logoIcon`, `logoImageUrl`). ✅
   - Un proveedor compartido (`useSiteSettings` + componente `BrandLogo`) muestra el mismo logo en el encabezado, el pie y el panel, actualizándose al guardar. ✅
   - Si hay imagen, reemplaza al ícono + texto; si no, se usa el ícono elegido con el texto. ✅
+- Estado: ✅ completada.
+
+### Fase 9.4: Pedidos personalizados (cotizaciones)
+- Objetivo: recibir solicitudes de piezas hechas a la medida y cotizarlas desde el panel.
+- Entregable:
+  - Página `/pedido-personalizado` con tipo de pieza, descripción, colores, tamaño/medidas, cantidad, fecha deseada, presupuesto y hasta 4 imágenes de referencia. ✅
+  - Tabla `custom_orders` con RLS (crear libremente, ver solo lo propio, administrar como admin) y carpeta `solicitudes/` para las fotos. ✅
+  - Bandeja `/admin/personalizados` con búsqueda, filtro por estado, cotización, notas internas y galería de referencias. ✅
+  - Accesos desde la sección nueva del Home y el pie de página. ✅
+  - `/mi-cuenta/personalizados`: la clienta con sesión sigue el estado de su cotización con línea de tiempo, monto cotizado y notas del taller. ✅
+  - Aviso automático por correo al taller (y confirmación a la clienta) al entrar una solicitud nueva, usando la función `send-email` (tipo `custom_order`). ✅
+  - Contador de solicitudes por cotizar en el resumen del panel y aviso en el menú lateral. ✅
+  - Registro de la solicitud vía función `create_custom_order` (devuelve el id para el aviso por correo). ✅
+  - Botón "Aceptar cotización" en `/mi-cuenta/personalizados`: la clienta confirma desde su cuenta; se ejecuta con la función segura `accept_custom_order_quote` (solo el dueño, solo si ya tiene precio y estado `quoted`) y se avisa al taller por correo (`send-email`, tipo `custom_order_accepted`). ✅
+  - Sección "Entregas próximas" en `/admin/dashboard`: solicitudes activas ordenadas por fecha de entrega, con su estado y una etiqueta de días restantes / atrasada. También incluye las que aún no tienen fecha, marcadas como "Pedir fecha" para recordar solicitarla. ✅
+  - Bandeja `/admin/personalizados`: resaltado de solicitudes atrasadas (franja de aviso, borde/tono distinto, etiqueta "Atrasada" y días de atraso), orden por fecha de entrega, filtro "Solo atrasadas" y selector de orden. ✅
+  - Correo de cotización (`send-email`, tipo `custom_order_quoted`) al guardar un monto en estado "Cotizada": incluye el detalle, el monto y un botón "Aceptar cotización" que lleva a `/cotizacion/:token` (token único `accept_token`). Al aceptar se ejecuta `accept_custom_order_quote_by_token` y se avisa al taller. ✅
 - Estado: ✅ completada.
 
 ### Fase 10 (pendiente): Pagos en línea

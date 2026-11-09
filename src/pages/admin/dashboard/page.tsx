@@ -2,6 +2,13 @@ import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/hooks/useAuth";
+import {
+  customOrderStatusLabel,
+  customOrderStatusTones,
+  daysUntil,
+  formatNeededBy,
+  pieceLabel,
+} from "@/lib/customOrders";
 
 interface StatCard {
   label: string;
@@ -11,15 +18,53 @@ interface StatCard {
   accent: "primary" | "accent" | "secondary";
 }
 
+interface UpcomingOrder {
+  id: string;
+  customerName: string;
+  pieceType: string;
+  neededBy: string;
+  status: string;
+}
+
 const accentClasses: Record<StatCard["accent"], string> = {
   primary: "bg-primary-100 text-primary-700",
   accent: "bg-accent-100 text-accent-700",
   secondary: "bg-secondary-100 text-secondary-700",
 };
 
+function deliveryBadge(days: number | null): { label: string; tone: string } {
+  if (days == null) {
+    return { label: "Pedir fecha", tone: "bg-accent-100 text-accent-900" };
+  }
+  if (days < 0) {
+    return {
+      label: `${Math.abs(days)} d atrasada`,
+      tone: "bg-primary-500 text-background-50",
+    };
+  }
+  if (days === 0) {
+    return { label: "Hoy", tone: "bg-accent-500 text-background-50" };
+  }
+  if (days <= 3) {
+    return { label: `En ${days} d`, tone: "bg-accent-100 text-accent-900" };
+  }
+  return { label: `En ${days} d`, tone: "bg-background-100 text-foreground-600" };
+}
+
+function dateBadge(value: string): { day: string; month: string } {
+  const date = new Date(`${value.slice(0, 10)}T12:00:00`);
+  if (Number.isNaN(date.getTime())) return { day: "--", month: "" };
+  return {
+    day: String(date.getDate()),
+    month: date.toLocaleDateString("es-CR", { month: "short" }).replace(".", ""),
+  };
+}
+
 export default function AdminDashboard() {
   const { profile } = useAuth();
   const [stats, setStats] = useState<StatCard[]>([]);
+  const [pendingCustom, setPendingCustom] = useState(0);
+  const [upcoming, setUpcoming] = useState<UpcomingOrder[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -30,17 +75,29 @@ export default function AdminDashboard() {
       const [
         products,
         orders,
+        customPending,
         courses,
         enrollments,
         appointments,
         patterns,
+        upcomingCustom,
       ] = await Promise.all([
         supabase.from("products").select("*", { count: "exact", head: true }),
         supabase.from("orders").select("*", { count: "exact", head: true }),
+        supabase
+          .from("custom_orders")
+          .select("id", { count: "exact", head: true })
+          .eq("status", "pending"),
         supabase.from("courses").select("*", { count: "exact", head: true }),
         supabase.from("enrollments").select("*", { count: "exact", head: true }),
         supabase.from("appointments").select("*", { count: "exact", head: true }),
         supabase.from("patterns").select("*", { count: "exact", head: true }),
+        supabase
+          .from("custom_orders")
+          .select("id, customer_name, piece_type, needed_by, status")
+          .in("status", ["pending", "quoted", "accepted", "in_progress"])
+          .order("needed_by", { ascending: true, nullsFirst: false })
+          .limit(6),
       ]);
 
       const firstError = [
@@ -52,6 +109,21 @@ export default function AdminDashboard() {
         patterns,
       ].find((result) => result.error);
       if (firstError?.error) throw firstError.error;
+
+      setPendingCustom(customPending.count ?? 0);
+
+      const upcomingRows = (upcomingCustom.data ?? []) as unknown as Array<
+        Record<string, unknown>
+      >;
+      setUpcoming(
+        upcomingRows.map((row) => ({
+          id: String(row.id),
+          customerName: String(row.customer_name ?? ""),
+          pieceType: String(row.piece_type ?? ""),
+          neededBy: row.needed_by ? String(row.needed_by) : "",
+          status: String(row.status ?? "pending"),
+        }))
+      );
 
       setStats([
         {
@@ -66,6 +138,13 @@ export default function AdminDashboard() {
           icon: "ri-shopping-cart-2-line",
           value: orders.count ?? 0,
           to: "/admin/pedidos",
+          accent: "accent",
+        },
+        {
+          label: "Por cotizar",
+          icon: "ri-hand-heart-line",
+          value: customPending.count ?? 0,
+          to: "/admin/personalizados",
           accent: "accent",
         },
         {
@@ -138,9 +217,109 @@ export default function AdminDashboard() {
         </div>
       )}
 
+      {pendingCustom > 0 && (
+        <Link
+          to="/admin/personalizados"
+          className="mb-5 flex items-center gap-4 rounded-2xl bg-primary-500 p-5 text-background-50 transition-colors hover:bg-primary-600"
+        >
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-background-50/20">
+            <i className="ri-hand-heart-line text-xl" />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-sm font-bold">
+              {pendingCustom} solicitud(es) esperando cotización
+            </span>
+            <span className="block text-xs text-background-50/80">
+              Abre los pedidos personalizados y envía el precio a tu clienta.
+            </span>
+          </span>
+          <i className="ri-arrow-right-line text-xl" />
+        </Link>
+      )}
+
+      {!loading && upcoming.length > 0 && (
+        <section className="mb-5 rounded-[2rem] border border-background-200/70 bg-background-50 p-5">
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex items-center gap-2.5">
+              <span className="flex h-9 w-9 items-center justify-center rounded-full bg-accent-100 text-accent-700">
+                <i className="ri-calendar-schedule-line" />
+              </span>
+              <div>
+                <h2 className="font-heading text-base font-semibold text-foreground-950">
+                  Entregas próximas
+                </h2>
+                <p className="text-[11px] text-foreground-500">
+                  Por fecha de entrega · incluye las que aún no tienen fecha
+                </p>
+              </div>
+            </div>
+            <Link
+              to="/admin/personalizados"
+              className="shrink-0 text-xs font-bold text-primary-700 transition-colors hover:text-primary-600"
+            >
+              Ver todas
+            </Link>
+          </div>
+
+          <ul className="mt-4 space-y-2.5">
+            {upcoming.map((item) => {
+              const days = daysUntil(item.neededBy);
+              const badge = deliveryBadge(days);
+              const date = dateBadge(item.neededBy);
+              const tone =
+                customOrderStatusTones[item.status] ?? "bg-background-100 text-foreground-600";
+              return (
+                <li key={item.id}>
+                  <Link
+                    to="/admin/personalizados"
+                    className="flex items-center gap-3 rounded-2xl bg-background-100 px-3 py-2.5 transition-colors hover:bg-background-200/60"
+                  >
+                    {item.neededBy ? (
+                      <span className="flex h-11 w-11 shrink-0 flex-col items-center justify-center rounded-xl bg-background-50 leading-none">
+                        <span className="text-base font-bold text-foreground-950">
+                          {date.day}
+                        </span>
+                        <span className="mt-0.5 text-[9px] font-bold uppercase tracking-wide text-foreground-500">
+                          {date.month}
+                        </span>
+                      </span>
+                    ) : (
+                      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-accent-100 text-accent-700">
+                        <i className="ri-calendar-2-line" />
+                      </span>
+                    )}
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-sm font-semibold text-foreground-900">
+                        {pieceLabel(item.pieceType)}
+                      </span>
+                      <span className="mt-0.5 flex flex-wrap items-center gap-1.5">
+                        <span className="truncate text-[11px] text-foreground-500">
+                          {item.customerName || "Sin nombre"}
+                        </span>
+                        <span
+                          className={`rounded-full px-1.5 py-0.5 text-[9px] font-bold ${tone}`}
+                        >
+                          {customOrderStatusLabel(item.status)}
+                        </span>
+                      </span>
+                    </span>
+                    <span
+                      className={`shrink-0 rounded-full px-2.5 py-1 text-[10px] font-bold ${badge.tone}`}
+                    >
+                      {badge.label}
+                    </span>
+                  </Link>
+                  <span className="sr-only">{formatNeededBy(item.neededBy)}</span>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+      )}
+
       {loading ? (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {Array.from({ length: 6 }).map((_, index) => (
+          {Array.from({ length: 7 }).map((_, index) => (
             <div
               key={index}
               className="h-28 animate-pulse rounded-2xl border border-background-200/70 bg-background-50"

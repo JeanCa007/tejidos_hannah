@@ -13,11 +13,14 @@ import MatriculaPage from "@/pages/matricula/page";
 import PatternsPage from "@/pages/patterns/page";
 import PatternDetailPage from "@/pages/patterns/detail/page";
 import AgendaPage from "@/pages/agenda/page";
+import CustomOrderPage from "@/pages/custom/page";
+import QuotePage from "@/pages/quote/page";
 import NosotrosPage from "@/pages/nosotros/page";
 import ContactoPage from "@/pages/contacto/page";
 import FaqPage from "@/pages/faq/page";
 import AccountPage from "@/pages/account/page";
 import MyOrdersPage from "@/pages/account/pedidos/page";
+import MyCustomOrdersPage from "@/pages/account/personalizados/page";
 import MyCoursesPage from "@/pages/account/cursos/page";
 import MyPatternsPage from "@/pages/account/patrones/page";
 import NotFound from "@/pages/NotFound";
@@ -34,6 +37,7 @@ import AdminClientesPage from "@/pages/admin/clientes/page";
 import AdminEnviosPage from "@/pages/admin/envios/page";
 import AdminContenidoPage from "@/pages/admin/contenido/page";
 import AdminConfiguracionPage from "@/pages/admin/configuracion/page";
+import AdminCustomOrdersPage from "@/pages/admin/personalizados/page";
 
 const routes: RouteObject[] = [
   {
@@ -49,6 +53,8 @@ const routes: RouteObject[] = [
       { path: "patrones", element: <PatternsPage /> },
       { path: "patrones/:id", element: <PatternDetailPage /> },
       { path: "agenda", element: <AgendaPage /> },
+      { path: "pedido-personalizado", element: <CustomOrderPage /> },
+      { path: "cotizacion/:token", element: <QuotePage /> },
       { path: "nosotros", element: <NosotrosPage /> },
       { path: "contacto", element: <ContactoPage /> },
       { path: "preguntas-frecuentes", element: <FaqPage /> },
@@ -57,6 +63,7 @@ const routes: RouteObject[] = [
       { path: "pedido/:id", element: <OrderConfirmationPage /> },
       { path: "mi-cuenta", element: <AccountPage /> },
       { path: "mi-cuenta/pedidos", element: <MyOrdersPage /> },
+      { path: "mi-cuenta/personalizados", element: <MyCustomOrdersPage /> },
       { path: "mi-cuenta/cursos", element: <MyCoursesPage /> },
       { path: "mi-cuenta/patrones", element: <MyPatternsPage /> },
     ],
@@ -79,6 +86,7 @@ const routes: RouteObject[] = [
       { path: "cursos", element: <AdminCursosPage /> },
       { path: "matriculas", element: <AdminMatriculasPage /> },
       { path: "citas", element: <AdminCitasPage /> },
+      { path: "personalizados", element: <AdminCustomOrdersPage /> },
       { path: "patrones", element: <AdminPatronesPage /> },
       { path: "clientes", element: <AdminClientesPage /> },
       { path: "envios", element: <AdminEnviosPage /> },

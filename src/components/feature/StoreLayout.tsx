@@ -72,6 +72,11 @@ export default function StoreLayout() {
                 </Link>
               </li>
               <li>
+                <Link to="/pedido-personalizado" className="hover:text-primary-600">
+                  Pedido personalizado
+                </Link>
+              </li>
+              <li>
                 <Link to="/agenda" className="hover:text-primary-600">
                   Agendar cita
                 </Link>

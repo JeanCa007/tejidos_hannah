@@ -5,6 +5,7 @@ import VerseSection from "./components/VerseSection";
 import FeaturedProducts from "./components/FeaturedProducts";
 import CoursesSection from "./components/CoursesSection";
 import PatternsSection from "./components/PatternsSection";
+import CustomOrderSection from "./components/CustomOrderSection";
 
 export default function Home() {
   return (
@@ -15,6 +16,7 @@ export default function Home() {
       <FeaturedProducts />
       <CoursesSection />
       <PatternsSection />
+      <CustomOrderSection />
 
       <section className="py-8 lg:py-12">
         <div className="flex flex-col items-center gap-6 rounded-[2rem] border border-background-200/70 bg-background-100 px-6 py-12 text-center sm:px-12">

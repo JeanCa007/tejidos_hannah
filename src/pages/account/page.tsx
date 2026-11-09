@@ -7,6 +7,7 @@ import ProfileEditor from "@/pages/account/components/ProfileEditor";
 
 const accountLinks = [
   { to: "/mi-cuenta/pedidos", key: "orders" as const, label: "Mis pedidos", icon: "ri-shopping-bag-3-line" },
+  { to: "/mi-cuenta/personalizados", key: "customOrders" as const, label: "Mis personalizados", icon: "ri-hand-heart-line" },
   { to: "/mi-cuenta/cursos", key: "courses" as const, label: "Mis cursos", icon: "ri-graduation-cap-line" },
   { to: "/mi-cuenta/patrones", key: "patterns" as const, label: "Mis patrones", icon: "ri-file-text-line" },
 ];
@@ -102,7 +103,7 @@ export default function AccountPage() {
         </Link>
       )}
 
-      <div className="mt-6 grid gap-4 sm:grid-cols-3">
+      <div className="mt-6 grid gap-4 sm:grid-cols-2">
         {accountLinks.map((link) => (
           <Link
             key={link.to}

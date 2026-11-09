@@ -210,6 +210,7 @@ export interface AccountCounts {
   orders: number;
   courses: number;
   patterns: number;
+  customOrders: number;
 }
 
 /**
@@ -217,15 +218,17 @@ export interface AccountCounts {
  * Row Level Security restricts each count to the current user's own rows.
  */
 export async function fetchAccountCounts(): Promise<AccountCounts> {
-  const [orders, courses, patterns] = await Promise.all([
+  const [orders, courses, patterns, customOrders] = await Promise.all([
     supabase.from("orders").select("id", { count: "exact", head: true }),
     supabase.from("enrollments").select("id", { count: "exact", head: true }),
     supabase.from("pattern_purchases").select("id", { count: "exact", head: true }),
+    supabase.from("custom_orders").select("id", { count: "exact", head: true }),
   ]);
   return {
     orders: orders.count ?? 0,
     courses: courses.count ?? 0,
     patterns: patterns.count ?? 0,
+    customOrders: customOrders.count ?? 0,
   };
 }
 
