@@ -20,14 +20,22 @@ export default function StoreHeader() {
               key={item.path}
               to={item.path}
               end={item.path === "/"}
-              className={({ isActive }) =>
-                `rounded-full px-4 py-2 text-sm font-semibold transition-colors ${
+              className={({ isActive }) => {
+                if (item.highlight) {
+                  return `flex items-center gap-1.5 rounded-full px-3.5 py-2 text-sm font-semibold transition-colors ${
+                    isActive
+                      ? "bg-accent-200 text-accent-900"
+                      : "bg-accent-100 text-accent-800 hover:bg-accent-200"
+                  }`;
+                }
+                return `rounded-full px-3 py-2 text-sm font-semibold transition-colors ${
                   isActive
                     ? "bg-primary-100 text-primary-700"
                     : "text-foreground-600 hover:bg-background-100 hover:text-foreground-900"
-                }`
-              }
+                }`;
+              }}
             >
+              {item.highlight && <i className={`${item.icon} text-base`} />}
               {item.label}
             </NavLink>
           ))}

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import { fetchCategories, fetchProducts } from "@/lib/catalog";
 import type { Category, Product } from "@/lib/storeTypes";
 import CategoryChips from "./components/CategoryChips";
@@ -72,6 +73,27 @@ export default function StorePage() {
         </p>
       </header>
 
+      <Link
+        to="/pedido-personalizado"
+        className="group mb-6 flex items-center gap-3.5 rounded-[1.75rem] border border-accent-200 bg-accent-100 p-4 transition-colors hover:bg-accent-200/70"
+      >
+        <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-background-50 text-accent-700">
+          <i className="ri-magic-line text-2xl" />
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-accent-700">
+            Hecho a tu medida
+          </p>
+          <p className="mt-0.5 font-heading text-base font-semibold text-foreground-950">
+            Cotiza tu pedido personalizado
+          </p>
+          <p className="mt-0.5 text-xs leading-snug text-foreground-600">
+            Cuéntanos tu idea y te enviamos el precio sin compromiso.
+          </p>
+        </div>
+        <i className="ri-arrow-right-line shrink-0 text-xl text-accent-700" />
+      </Link>
+
       <div className="space-y-4">
         <CategoryChips categories={categories} active={category} onChange={setCategory} />
         <StoreControls
@@ -140,6 +162,13 @@ export default function StorePage() {
             <i className="ri-refresh-line" />
             Ver todo
           </button>
+          <Link
+            to="/pedido-personalizado"
+            className="mt-3 inline-flex items-center gap-2 text-sm font-semibold text-accent-700 hover:text-accent-800"
+          >
+            <i className="ri-magic-line" />
+            O cotiza una pieza a tu medida
+          </Link>
         </div>
       )}
     </div>

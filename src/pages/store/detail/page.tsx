@@ -6,6 +6,7 @@ import type { Product } from "@/lib/storeTypes";
 import ProductCard from "@/pages/store/components/ProductCard";
 import ProductGallery from "./components/ProductGallery";
 import ProductPurchasePanel from "./components/ProductPurchasePanel";
+import CustomQuoteCta from "./components/CustomQuoteCta";
 
 const benefits = [
   { icon: "ri-truck-line", label: "Envío a todo Costa Rica" },
@@ -86,6 +87,13 @@ export default function ProductDetailPage() {
         >
           <i className="ri-arrow-left-line" />
           Volver a la tienda
+        </Link>
+        <Link
+          to="/pedido-personalizado"
+          className="mt-3 inline-flex items-center gap-2 rounded-full bg-accent-500 px-6 py-3 text-sm font-semibold text-background-50 transition-colors hover:bg-accent-600"
+        >
+          <i className="ri-magic-line" />
+          Cotizar una pieza a tu medida
         </Link>
       </section>
     );
@@ -193,6 +201,8 @@ export default function ProductDetailPage() {
           </ul>
         </div>
       </section>
+
+      <CustomQuoteCta />
 
       {related.length > 0 && (
         <section className="mt-12">

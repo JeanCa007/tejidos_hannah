@@ -28,17 +28,26 @@ export default function HeroSection() {
           {hero.title}
         </h1>
         <p className="mt-5 max-w-lg text-base text-foreground-600">{hero.subtitle}</p>
-        <div className="mt-8 flex flex-wrap items-center gap-3">
-          <Link
-            to="/tienda"
-            className="inline-flex items-center gap-2 rounded-full bg-primary-500 px-6 py-3.5 text-sm font-semibold text-background-50 shadow-soft transition-colors hover:bg-primary-600"
-          >
-            <i className="ri-shopping-bag-3-line text-lg" />
-            Ver la tienda
-          </Link>
+        <div className="mt-8 flex flex-col gap-2.5 sm:flex-row sm:flex-wrap sm:items-center sm:gap-3">
+          <div className="grid grid-cols-2 gap-2.5 sm:contents">
+            <Link
+              to="/tienda"
+              className="inline-flex items-center justify-center gap-2 rounded-full bg-primary-500 px-4 py-3.5 text-sm font-semibold text-background-50 shadow-soft transition-colors hover:bg-primary-600 sm:px-6"
+            >
+              <i className="ri-shopping-bag-3-line text-lg" />
+              Ver la tienda
+            </Link>
+            <Link
+              to="/pedido-personalizado"
+              className="inline-flex items-center justify-center gap-2 rounded-full bg-accent-500 px-4 py-3.5 text-sm font-semibold text-background-50 shadow-soft transition-colors hover:bg-accent-600 sm:px-6"
+            >
+              <i className="ri-magic-line text-lg" />
+              Cotizar pedido
+            </Link>
+          </div>
           <Link
             to="/cursos"
-            className="inline-flex items-center gap-2 rounded-full border border-background-300 bg-background-50 px-6 py-3.5 text-sm font-semibold text-foreground-800 transition-colors hover:bg-background-100"
+            className="inline-flex items-center justify-center gap-2 rounded-full border border-background-300 bg-background-50 px-6 py-3.5 text-sm font-semibold text-foreground-800 transition-colors hover:bg-background-100"
           >
             <i className="ri-graduation-cap-line text-lg" />
             Explorar cursos
